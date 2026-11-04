@@ -1,0 +1,15 @@
+# Dependencies / Environments
+node_modules/
+venv/
+__pycache__/
+
+# Environment Variables
+.env
+
+# Build outputs
+dist/
+build/
+
+*.exe
+Anaconda3*.exe
+vs_BuildTools.exe
