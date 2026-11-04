@@ -1,4 +1,10 @@
 import os
+import asyncio
+import nest_asyncio
+
+# Apply nest_asyncio to fix event loop conflicts in Streamlit
+nest_asyncio.apply()
+
 from datasets import Dataset
 from ragas import evaluate
 from ragas.metrics import (
@@ -26,10 +32,10 @@ def run_batch_evaluation(queries=None, responses=None, contexts=None, ground_tru
     
     dataset = Dataset.from_dict(data)
     
-    # Explicitly define the evaluation LLM using langchain_openai
+    # Explicitly define the evaluation LLM
     eval_llm = ChatOpenAI(model="gpt-4o")
     
-    # Pass llm to the evaluate function
+    # Run RAGAS evaluation
     score = evaluate(
         dataset=dataset,
         metrics=[
