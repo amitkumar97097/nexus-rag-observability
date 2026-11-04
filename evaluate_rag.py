@@ -2,7 +2,6 @@ import os
 import asyncio
 import nest_asyncio
 
-# Apply nest_asyncio to fix event loop conflicts in Streamlit
 nest_asyncio.apply()
 
 from datasets import Dataset
@@ -17,6 +16,15 @@ from langchain_openai import ChatOpenAI
 def run_batch_evaluation(queries=None, responses=None, contexts=None, ground_truths=None):
     print("Initializing RAGAS Batch Evaluation...")
     
+    # Ensure there is a running event loop for asyncio tasks in Python 3.14
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
     if queries is None:
         queries = ["What is the capital of France?"]
         responses = ["Paris is the capital of France."]
@@ -31,11 +39,8 @@ def run_batch_evaluation(queries=None, responses=None, contexts=None, ground_tru
     }
     
     dataset = Dataset.from_dict(data)
-    
-    # Explicitly define the evaluation LLM
     eval_llm = ChatOpenAI(model="gpt-4o")
     
-    # Run RAGAS evaluation
     score = evaluate(
         dataset=dataset,
         metrics=[
