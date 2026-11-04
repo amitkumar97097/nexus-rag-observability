@@ -16,15 +16,6 @@ from langchain_openai import ChatOpenAI
 def run_batch_evaluation(queries=None, responses=None, contexts=None, ground_truths=None):
     print("Initializing RAGAS Batch Evaluation...")
     
-    # Ensure there is a running event loop for asyncio tasks in Python 3.14
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            raise RuntimeError()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
     if queries is None:
         queries = ["What is the capital of France?"]
         responses = ["Paris is the capital of France."]
@@ -41,15 +32,25 @@ def run_batch_evaluation(queries=None, responses=None, contexts=None, ground_tru
     dataset = Dataset.from_dict(data)
     eval_llm = ChatOpenAI(model="gpt-4o")
     
-    score = evaluate(
-        dataset=dataset,
-        metrics=[
-            faithfulness,
-            answer_relevancy,
-            context_precision
-        ],
-        llm=eval_llm
-    )
+    # Define an async wrapper so asyncio.run() creates a valid task context for Python 3.14
+    async def _evaluate_async():
+        return evaluate(
+            dataset=dataset,
+            metrics=[
+                faithfulness,
+                answer_relevancy,
+                context_precision
+            ],
+            llm=eval_llm
+        )
+
+    # Run safely using asyncio.run or fallback event loop
+    try:
+        score = asyncio.run(_evaluate_async())
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        score = loop.run_until_complete(_evaluate_async())
     
     return score
 
