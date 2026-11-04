@@ -6,11 +6,11 @@ from ragas.metrics import (
     answer_relevancy,
     context_precision
 )
+from langchain_openai import ChatOpenAI
 
 def run_batch_evaluation(queries=None, responses=None, contexts=None, ground_truths=None):
     print("Initializing RAGAS Batch Evaluation...")
     
-    # Sample evaluation dataset structure if none provided
     if queries is None:
         queries = ["What is the capital of France?"]
         responses = ["Paris is the capital of France."]
@@ -26,14 +26,18 @@ def run_batch_evaluation(queries=None, responses=None, contexts=None, ground_tru
     
     dataset = Dataset.from_dict(data)
     
-    # Run RAGAS evaluation using updated metric names
+    # Explicitly define the evaluation LLM using langchain_openai
+    eval_llm = ChatOpenAI(model="gpt-4o")
+    
+    # Pass llm to the evaluate function
     score = evaluate(
         dataset=dataset,
         metrics=[
             faithfulness,
             answer_relevancy,
             context_precision
-        ]
+        ],
+        llm=eval_llm
     )
     
     return score
